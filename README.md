@@ -208,15 +208,24 @@ dependencies {
 
 ---
 
-## 🛠️ 构建与测试
+## 🛠️ 构建与运行可执行 JAR (Fat JAR)
 
-本工程采用 **Gradle 9.x + Kotlin JVM Toolchain 21** 构建：
+本工程采用 **Gradle 9.x + Kotlin JVM Toolchain 21** 构建，已原生集成可独立部署的 **Fat JAR / Executable JAR** 打包任务：
 
 ```bash
-# 编译并构建完整 Jar 产物
+# 1. 构建全量依赖可运行 Fat JAR (生成于 build/libs/xiaomingbot-qqbot-1.0.0-all.jar)
+./gradlew fatJar -x test
+
+# 或执行 build（已绑定依赖 fatJar）
 ./gradlew build -x test
 
-# 发布至本地 Maven 仓库 ~/.m2/repository
+# 2. 直接运行可执行 Jar
+java -jar build/libs/xiaomingbot-qqbot-1.0.0-all.jar
+
+# 3. 指定外部自定义配置文件运行
+java -jar build/libs/xiaomingbot-qqbot-1.0.0-all.jar /path/to/my-qqbot.json
+
+# 4. 发布至本地 Maven 仓库 ~/.m2/repository
 ./gradlew publishToMavenLocal -x test
 ```
 

@@ -123,6 +123,57 @@ fun main() {
 
 ---
 
+## 🎨 富文本、Markdown、交互按钮与图片/媒体发送支持
+
+QQ 开放平台官方 OpenAPI 体系中提供了高度结构化的发信能力。为了让小明插件开发者在使用 `XiaoMingContact` / `QqContact` 时得到极佳体验，本项目提供了 **`QqContactExtensions`** 一站式 Kotlin 扩展方法：
+
+### 1. 发送 Markdown 消息
+```kotlin
+import cn.qfys521.xiaoming.qqbot.extension.*
+
+val qqContact = contact.asQqContact() ?: return
+// 1. 直接发送原生 Markdown 文本
+qqContact.sendMarkdown("# 欢迎使用小明 QQ 官方机器人\n> 这是原生 Markdown 渲染支持！")
+
+// 2. 基于开放平台模板 ID 渲染 Markdown
+qqContact.sendMarkdownTemplate(templateId = 1000123)
+```
+
+### 2. 发送交互按钮 (Keyboard / Action Buttons)
+```kotlin
+import cn.qfys521.qqbot.model.message.*
+import cn.qfys521.xiaoming.qqbot.extension.*
+
+val keyboard = Keyboard(
+    content = Row(
+        buttons = listOf(
+            Button(
+                id = "btn_1",
+                renderData = RenderData(label = "点击签到", style = 1),
+                action = Action(type = 2, data = "/签到")
+            )
+        )
+    )
+)
+qqContact.sendKeyboard(keyboard, content = "请选择功能菜单：")
+```
+
+### 3. 图片与多媒体文件解决方案 (`sendImage` / `sendVideo` / `sendAudio`)
+与传统 Mirai 的 MD5 本地/缓存图片 ID 不同，QQ 官方标准要求调用 `/v2/groups/{id}/files` 或 `/v2/users/{id}/files` 接口进行网络资源转存：
+- **最佳解决方案（秒转存直发）**：提供 `srv_send_msg = true` 参数，由腾讯云网关自动拉取图片 URL 并立即在一瞬间推送到会话中，无需维护 token 或两步发送。
+- `QqContactExtensions` 为此做了完美封装：
+
+```kotlin
+// 自动转存并直发图片（jpg / png 网络链接）
+qqContact.sendImage("https://example.com/banner.jpg")
+
+// 发送网络视频或丝滑语音
+qqContact.sendVideo("https://example.com/demo.mp4")
+qqContact.sendAudio("https://example.com/voice.silk")
+```
+
+---
+
 ## 📦 Maven/Gradle 引入方式
 
 当前项目已配置完整发布规范，可通过 Maven Local 或自定义私服引用：

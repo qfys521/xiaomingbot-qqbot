@@ -34,7 +34,7 @@ import java.util.function.Predicate
  */
 class QqContact(
     private var bot: XiaoMingBot,
-    private val qqBot: QQBot,
+    val qqBot: QQBot,
     val contactId: String,
     private val contactName: String = contactId,
     val isDirect: Boolean = false,

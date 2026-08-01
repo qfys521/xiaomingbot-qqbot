@@ -1,0 +1,80 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '2.4.0'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.4.0'
+    id 'maven-publish'
+}
+
+group = 'cn.qfys521'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+    google()
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    // Coroutines & Serialization
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.0'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1'
+    implementation 'io.ktor:ktor-serialization-kotlinx-json:3.0.3'
+
+    // QQ Bot Official Kotlin SDK (qqbotkt)
+    implementation 'cn.qfys521:qqbotkt:1.0.0'
+
+    // XiaoMingBot Framework Core (from flatDir libs repository)
+    implementation ':xiaomingbot-20250101-210305-all:'
+
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+    testImplementation 'ch.qos.logback:logback-classic:1.5.16'
+
+    // Testing
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1'
+}
+
+kotlin {
+    jvmToolchain(21)
+}
+
+java {
+    withSourcesJar()
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            groupId = 'cn.qfys521'
+            artifactId = 'xiaomingbot-qqbot'
+            version = '1.0.0'
+
+            pom {
+                name = 'XiaoMingBot-QQBot'
+                description = 'Official QQ Bot adapter for XiaoMingBot Framework'
+                url = 'https://bot.q.qq.com'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'qfys521'
+                        name = 'qfys521'
+                    }
+                }
+            }
+        }
+    }
+}

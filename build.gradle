@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version '2.4.0'
     id 'maven-publish'
     id "org.jetbrains.kotlin.plugin.lombok" version '2.4.0'
+    id 'application'
 }
 
 group = 'cn.qfys521'
@@ -32,7 +33,7 @@ dependencies {
 
     // Logging
     implementation 'org.slf4j:slf4j-api:2.0.16'
-    testImplementation 'ch.qos.logback:logback-classic:1.5.16'
+    implementation 'ch.qos.logback:logback-classic:1.5.16'
 
     // Testing
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
@@ -78,4 +79,29 @@ publishing {
             }
         }
     }
+}
+
+application {
+    mainClass = 'cn.qfys521.xiaoming.qqbot.QqBotLauncher'
+}
+
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+            'Main-Class': 'cn.qfys521.xiaoming.qqbot.QqBotLauncher',
+            'Implementation-Title': 'XiaoMingBot-QQBot',
+            'Implementation-Version': archiveVersion
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/INDEX.LIST'
+    with jar
+}
+
+tasks.named('build') {
+    dependsOn('fatJar')
 }

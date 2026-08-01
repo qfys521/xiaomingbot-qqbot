@@ -10,6 +10,7 @@ import cn.chuanwise.xiaoming.recept.ReceptionTask
 import cn.chuanwise.xiaoming.recept.Receptionist
 import cn.chuanwise.xiaoming.user.XiaoMingUser
 import cn.qfys521.xiaoming.qqbot.contact.QqContact
+import cn.qfys521.xiaoming.qqbot.id.QqIdMapper
 import cn.qfys521.xiaoming.qqbot.message.QqMessage
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.MessageChainBuilder
@@ -56,7 +57,7 @@ class QqUser(
     override fun getLogger(): Logger = logger
 
     override fun getCode(): Long {
-        return userId.toLongOrNull() ?: userId.hashCode().toLong()
+        return QqIdMapper.toLongId(userId)
     }
 
     override fun getCodeString(): String = userId

@@ -22,6 +22,7 @@
      - `QqContact`: 会话适配器（区分群组与私聊），通过内置的 `Proxy` 对象优雅对接 Mirai-Contact 接口，实现 `sendMessage` 下发。
      - `QqUser`: 发信人实体适配，完整支持小明 `PropertyHandler` 属性包与标签标记，兼容群管理员及权限判定。
      - `QqMessage`: 消息体包装，承载文本、收发时间戳及用于引用和回复处理的 `msg_id`。
+     - `QqIdMapper`: **OpenID 双向映射中心**。解决 QQ 官方长字符串 OpenID/GroupOpenID 与 Mirai `long` 型 ID 的兼容问题，通过自 `10,000,000,000L` 起的自增非冲突 ID 替代容易碰撞的 `hashCode()`，并自动落地至 `configurations/qq_id_map.json`。
      - `QqEventListener`: 网关事件路由器，全自动解包转译后派发至 `contactManager` 与主协程调度器 (`scheduler`)。
 4. **极简开箱与命令引导**
    - 内置 `QqBotLauncher` 主启动程序，首次执行时会自动在当前工作目录生成模板配置文件 `qqbot.json` 并以友好的控制台提示引导开发者接入。

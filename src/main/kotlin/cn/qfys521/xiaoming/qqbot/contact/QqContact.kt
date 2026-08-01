@@ -4,6 +4,7 @@ import cn.chuanwise.xiaoming.bot.XiaoMingBot
 import cn.chuanwise.xiaoming.contact.contact.XiaoMingContact
 import cn.chuanwise.xiaoming.contact.message.Message
 import cn.qfys521.qqbot.QQBot
+import cn.qfys521.xiaoming.qqbot.id.QqIdMapper
 import cn.qfys521.xiaoming.qqbot.message.QqMessage
 import kotlinx.coroutines.runBlocking
 import net.mamoe.mirai.contact.Contact
@@ -55,7 +56,7 @@ class QqContact(
     override fun getMiraiContact(): Contact = proxyContact
 
     override fun getCode(): Long {
-        return contactId.toLongOrNull() ?: contactId.hashCode().toLong()
+        return QqIdMapper.toLongId(contactId)
     }
 
     override fun getCodeString(): String = contactId
@@ -116,7 +117,7 @@ class QqContact(
 
     companion object {
         private fun createFakeMiraiContact(idStr: String, name: String): Contact {
-            val numId = idStr.toLongOrNull() ?: idStr.hashCode().toLong()
+            val numId = QqIdMapper.toLongId(idStr)
             return Proxy.newProxyInstance(
                 Contact::class.java.classLoader,
                 arrayOf(Contact::class.java)

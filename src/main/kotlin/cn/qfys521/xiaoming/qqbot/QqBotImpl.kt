@@ -17,6 +17,7 @@ import cn.qfys521.qqbot.QQBot
 import cn.qfys521.qqbot.config.QQBotConfig
 import cn.qfys521.qqbot.model.common.ShardConfig
 import cn.qfys521.xiaoming.qqbot.config.QqBotConfig
+import cn.qfys521.xiaoming.qqbot.id.QqIdMapper
 import cn.qfys521.xiaoming.qqbot.listener.QqEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -123,6 +124,8 @@ class QqBotImpl(
         gatewayJob?.cancel()
         qqBot.stop()
 
+        QqIdMapper.save()
+
         statistician.onClose()
         scheduler.stopNow()
 
@@ -150,6 +153,7 @@ class QqBotImpl(
             }
         }
 
+        QqIdMapper.initialize(File(configurationDirectory, "qq_id_map.json"))
         load()
 
         // 注册默认内部交互器组
@@ -197,7 +201,7 @@ class QqBotImpl(
 
     companion object {
         private fun createFakeMiraiBot(appId: String): Bot {
-            val numId = appId.toLongOrNull() ?: appId.hashCode().toLong()
+            val numId = QqIdMapper.toLongId(appId)
             return Proxy.newProxyInstance(
                 Bot::class.java.classLoader,
                 arrayOf(Bot::class.java)

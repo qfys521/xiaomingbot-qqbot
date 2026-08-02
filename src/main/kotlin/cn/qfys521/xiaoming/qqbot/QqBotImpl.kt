@@ -17,6 +17,8 @@ import cn.qfys521.qqbot.QQBot
 import cn.qfys521.qqbot.config.QQBotConfig
 import cn.qfys521.qqbot.model.common.ShardConfig
 import cn.qfys521.xiaoming.qqbot.config.QqBotConfig
+import cn.qfys521.xiaoming.qqbot.console.QqConsoleContact
+import cn.qfys521.xiaoming.qqbot.console.QqConsoleUser
 import cn.qfys521.xiaoming.qqbot.id.QqIdMapper
 import cn.qfys521.xiaoming.qqbot.listener.QqEventListener
 import kotlinx.coroutines.CoroutineScope
@@ -25,8 +27,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import net.mamoe.mirai.Bot
+import net.mamoe.mirai.contact.ContactList
+import net.mamoe.mirai.utils.MiraiInternalApi
 import java.io.File
 import java.lang.reflect.Proxy
+import java.util.Collections
 
 /**
  * QQ 官方机器人适配的 [XiaoMingBot] 核心实现类。
@@ -49,7 +54,7 @@ class QqBotImpl(
             appId = config.appId,
             clientSecret = config.clientSecret,
             sandbox = config.sandbox,
-            intents = config.intents,
+            intents = QqBotConfig.resolveIntents(config.intents),
             shard = ShardConfig(config.shardId, config.shardCount)
         )
     )
@@ -156,6 +161,12 @@ class QqBotImpl(
         QqIdMapper.initialize(File(configurationDirectory, "qq_id_map.json"))
         load()
 
+        // 初始化控制台用户（拥有最高权限，可在 stdin 输入指令）
+        val consoleContact = QqConsoleContact(this)
+        val consoleUser = QqConsoleUser(this, consoleContact)
+        consoleUser.receptionist = receptionistManager.getReceptionist(code)
+        consoleXiaoMingUser = consoleUser
+
         // 注册默认内部交互器组
         val im = interactorManager
         im.registerInteractors(PluginInteractors(), null)
@@ -199,24 +210,41 @@ class QqBotImpl(
         )
     }
 
+    @OptIn(MiraiInternalApi::class)
     companion object {
+        /** 空的群组联系人列表，用于代理返回 */
+        private val EMPTY_GROUPS = ContactList<net.mamoe.mirai.contact.Group>()
+        /** 空的好友联系人列表，用于代理返回 */
+        private val EMPTY_FRIENDS = ContactList<net.mamoe.mirai.contact.Friend>()
+
         private fun createFakeMiraiBot(appId: String): Bot {
             val numId = QqIdMapper.toLongId(appId)
             return Proxy.newProxyInstance(
                 Bot::class.java.classLoader,
                 arrayOf(Bot::class.java)
-            ) { _, method, _ ->
+            ) { _, method, args ->
                 when (method.name) {
                     "getId" -> numId
                     "isOnline" -> true
                     "getNick", "getName" -> "QQ-Bot-$appId"
                     "login", "close" -> null
+                    // 返回空的联系人列表，防止 ContactManagerImpl 调用 .stream() 时 NPE
+                    "getGroups" -> EMPTY_GROUPS
+                    "getFriends" -> EMPTY_FRIENDS
+                    // 单个查询返回 null（上层代码已使用 Optional 包装）
+                    "getGroup", "getFriend" -> null
+                    "toString" -> "FakeMiraiBot(appId=$appId)"
+                    "hashCode" -> numId.hashCode()
+                    "equals" -> (args?.getOrNull(0) === method)
                     else -> {
                         when (method.returnType) {
-                            Boolean::class.java -> false
+                            Boolean::class.java, java.lang.Boolean::class.java -> false
                             Long::class.java, Long::class.javaObjectType -> 0L
                             Int::class.java, Int::class.javaObjectType -> 0
                             String::class.java -> ""
+                            List::class.java, Collection::class.java, MutableList::class.java -> Collections.emptyList<Any>()
+                            Map::class.java, MutableMap::class.java -> Collections.emptyMap<Any, Any>()
+                            Set::class.java, MutableSet::class.java -> Collections.emptySet<Any>()
                             else -> null
                         }
                     }

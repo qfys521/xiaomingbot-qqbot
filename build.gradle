@@ -10,8 +10,10 @@ group = 'cn.qfys521'
 version = '1.0.0'
 
 repositories {
-    mavenCentral()
     mavenLocal()
+    maven { url 'https://maven.aliyun.com/repository/public' }
+    maven { url 'https://maven.aliyun.com/repository/central' }
+    mavenCentral()
     google()
     flatDir {
         dirs 'libs'

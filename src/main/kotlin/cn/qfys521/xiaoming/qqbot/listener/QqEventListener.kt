@@ -220,6 +220,9 @@ class QqEventListener(
     }
 
     private fun dispatchToXiaoMing(user: QqUser, msg: QqMessage) {
+        // 控制台输出收到的消息
+        logger.info("[收到消息] {} ({}) -> {}", user.completeName, user.codeString, msg.serialize())
+
         bot.contactManager.onNextMessageEvent(MessageEvent(user, msg))
         bot.statistician.increaseCallNumber()
         bot.scheduler.run(QqReceptionTask(user, msg))

@@ -87,6 +87,7 @@ class QqContact(
                     )
                 }
             }
+            logger.info("[发送消息] -> {} ({}): {}", contactName, contactId, text)
             val sentMsg = QqMessage(bot, text, System.currentTimeMillis(), response.id ?: "")
             Optional.of(sentMsg)
         } catch (e: Exception) {

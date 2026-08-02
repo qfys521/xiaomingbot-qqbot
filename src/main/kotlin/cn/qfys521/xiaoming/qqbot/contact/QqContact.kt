@@ -67,24 +67,25 @@ class QqContact(
 
     override fun getAvatarUrl(): String = ""
 
+    private var msgSeq = 1
+
     override fun sendMessage(messages: MessageChain?): Optional<Message> {
         val text = messages?.contentToString() ?: return Optional.empty()
         if (text.isBlank()) return Optional.empty()
 
         return try {
             val response = runBlocking {
+                val req = cn.qfys521.qqbot.model.message.SendMessageRequest(
+                    content = if (text.length <= 50) text else null,
+                    msgType = if (text.length > 50) 2 else 0,
+                    markdown = if (text.length > 50) cn.qfys521.qqbot.model.message.MessageMarkdown(content = text) else null,
+                    msgId = lastMessageId.ifEmpty { null },
+                    msgSeq = if (lastMessageId.isNotEmpty()) msgSeq++ else null
+                )
                 if (isDirect) {
-                    qqBot.api.sendC2CMessage(
-                        userOpenId = contactId,
-                        content = text,
-                        msgId = lastMessageId.ifEmpty { null }
-                    )
+                    qqBot.api.sendC2CMessage(userOpenId = contactId, request = req)
                 } else {
-                    qqBot.api.sendGroupMessage(
-                        groupOpenId = contactId,
-                        content = text,
-                        msgId = lastMessageId.ifEmpty { null }
-                    )
+                    qqBot.api.sendGroupMessage(groupOpenId = contactId, request = req)
                 }
             }
             logger.info("[发送消息] -> {} ({}): {}", contactName, contactId, text)

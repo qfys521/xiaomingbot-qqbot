@@ -1,3 +1,5 @@
+@file:Suppress("DuplicatedCode")
+
 package cn.qfys521.xiaoming.qqbot.listener
 
 import cn.chuanwise.xiaoming.event.MessageEvent
@@ -37,10 +39,45 @@ class QqEventListener(
      */
     fun registerToBot() {
         qqBot.eventDispatcher.onGroupAtMessage { event -> handleGroupMessage(event) }
+        qqBot.eventDispatcher.onGroupMessage { event -> handleGroupMessage(event) }
         qqBot.eventDispatcher.onC2CMessage { event -> handleC2CMessage(event) }
         qqBot.eventDispatcher.onGuildAtMessage { event -> handleGuildAtMessage(event) }
         qqBot.eventDispatcher.onGuildMessage { event -> handleGuildMessage(event) }
         qqBot.eventDispatcher.onDirectMessage { event -> handleDirectMessage(event) }
+    }
+
+    private fun handleGroupMessage(event: cn.qfys521.qqbot.event.GroupMessageEvent) {
+        try {
+            val content = event.message.content.trim()
+            if (content.isEmpty()) return
+
+            val contactId = event.groupOpenId.ifEmpty { event.message.groupOpenId ?: "" }
+            val contact = QqContact(
+                bot = bot,
+                qqBot = qqBot,
+                contactId = contactId,
+                contactName = "群-$contactId",
+                isDirect = false,
+                lastMessageId = event.message.id
+            )
+            val user = QqUser(
+                bot = bot,
+                contact = contact,
+                userId = event.authorId,
+                userName = event.authorName
+            )
+            val msg = QqMessage(
+                bot = bot,
+                content = content,
+                time = System.currentTimeMillis(),
+                messageId = event.message.id,
+                rawEvent = event
+            )
+
+            dispatchToXiaoMing(user, msg)
+        } catch (e: Exception) {
+            logger.error("处理 QQ 普通群聊事件消息时发生错误: ${e.message}", e)
+        }
     }
 
     private fun handleGroupMessage(event: GroupAtMessageEvent) {

@@ -24,7 +24,13 @@
      - `QqMessage`: 消息体包装，承载文本、收发时间戳及用于引用和回复处理的 `msg_id`。
      - `QqIdMapper`: **OpenID 双向映射中心**。解决 QQ 官方长字符串 OpenID/GroupOpenID 与 Mirai `long` 型 ID 的兼容问题，通过自 `10,000,000,000L` 起的自增非冲突 ID 替代容易碰撞的 `hashCode()`，并自动落地至 `configurations/qq_id_map.json`。
      - `QqEventListener`: 网关事件路由器，全自动解包转译后派发至 `contactManager` 与主协程调度器 (`scheduler`)。
-4. **极简开箱与命令引导**
+4. **长文本 Markdown 与无@主动消息**
+   - 发送文本消息时自动判断长度，当内容 > 50 字符时智能切换为 QQ 官方 Markdown 格式发送。
+   - 完美适配主动消息及小明长消息分页连续发送（自动追踪并处理 `msg_seq` 自增防止 API 拦截），并底层接入支持普通（无@）群消息监听 (`GROUP_MESSAGE_CREATE`)。
+5. **控制台管理员交互与日志**
+   - 启动后拥有带最高管理权限的终端，可直接在标准输入 (stdin) 控制台中敲入指令（如 `#help`、`#plugins`）与机器人内核交互。
+   - 清晰的接收/发送日志流可实时排查会话情况。
+6. **极简开箱与命令引导**
    - 内置 `QqBotLauncher` 主启动程序，首次执行时会自动在当前工作目录生成模板配置文件 `qqbot.json` 并以友好的控制台提示引导开发者接入。
 
 ---
@@ -73,7 +79,10 @@
   "sandbox": false,
   "shardId": 0,
   "shardCount": 1,
-  "intents": 1073741824,
+  "intents": [
+    "GROUP_AND_C2C_EVENT",
+    "INTERACTION"
+  ],
   "workingDirectory": "."
 }
 ```
@@ -82,6 +91,7 @@
 - `clientSecret`: 核心高密鉴权凭证（开放平台 v2 认证体系推荐配置）
 - `sandbox`: 是否连接开发沙箱网关（生产部署请设为 `false`）
 - `shardId` / `shardCount`: 若需要启动集群多节点分片，配置 `[0, N]` 即可生效
+- `intents`: 事件订阅数组。支持的常用事件包括：`GROUP_AND_C2C_EVENT` (群聊/私聊消息)、`GUILDS` (频道管理)、`GUILD_MEMBERS` (频道成员)、`GUILD_MESSAGES` (频道内全部消息)、`GUILD_AT_MESSAGES` (频道@消息)、`INTERACTION` (按钮/菜单交互)。程序启动时会自动解析并转换为底层的位掩码。
 
 ### 2. 通过命令行启动器运行
 

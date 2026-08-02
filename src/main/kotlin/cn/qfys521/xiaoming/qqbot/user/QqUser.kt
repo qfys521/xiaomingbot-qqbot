@@ -112,6 +112,21 @@ class QqUser(
         return onNextMessage(msg)
     }
 
+    override fun nextMessage(timeout: Long): Optional<Message> {
+        return bot.contactManager.nextMessageEvent(timeout) { event ->
+            event.user.contact.code == contact.code && event.user.code == this.code
+        }.map { event ->
+            val message = event.message
+            val serializedMessage = message.serialize()
+            if (serializedMessage == "退出") {
+                throw cn.chuanwise.xiaoming.exception.InteractExitedException()
+            } else {
+                bot.statistician.increaseCallNumber()
+                message
+            }
+        }
+    }
+
     override fun getTags(): Set<String> = Collections.unmodifiableSet(tags)
 
     override fun getOriginalTags(): Set<String> = setOf("all")

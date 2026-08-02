@@ -29,9 +29,58 @@ class QqMessage(
     val rawEvent: Any? = null
 ) : Message {
 
-    private var currentChain: MessageChain = MessageChainBuilder()
-        .append(PlainText(content))
-        .build()
+    private var currentChain: MessageChain = MessageChainBuilder().apply {
+        val regex = "<@!?([A-Za-z0-9_]+)>".toRegex()
+        val hexRegex = "\\b[A-Fa-f0-9]{32}\\b".toRegex()
+        
+        fun processPlainText(text: String): String {
+            return hexRegex.replace(text) { match ->
+                cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toLongId(match.value).toString()
+            }
+        }
+        
+        var lastMatchEnd = 0
+        
+        regex.findAll(content).forEach { matchResult ->
+            val textBefore = content.substring(lastMatchEnd, matchResult.range.first)
+            if (textBefore.isNotEmpty()) {
+                append(PlainText(processPlainText(textBefore)))
+            }
+            
+            val openId = matchResult.groupValues[1]
+            val longId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toLongId(openId)
+            append(net.mamoe.mirai.message.data.At(longId))
+            
+            lastMatchEnd = matchResult.range.last + 1
+        }
+        
+        val textAfter = content.substring(lastMatchEnd)
+        if (textAfter.isNotEmpty()) {
+            append(PlainText(processPlainText(textAfter)))
+        }
+        
+        if (rawEvent is cn.qfys521.qqbot.event.BotEvent) {
+            val messageObj = when (rawEvent) {
+                is cn.qfys521.qqbot.event.GroupMessageEvent -> rawEvent.message
+                is cn.qfys521.qqbot.event.GroupAtMessageEvent -> rawEvent.message
+                is cn.qfys521.qqbot.event.C2CMessageEvent -> rawEvent.message
+                is cn.qfys521.qqbot.event.GuildMessageEvent -> rawEvent.message
+                is cn.qfys521.qqbot.event.GuildAtMessageEvent -> rawEvent.message
+                is cn.qfys521.qqbot.event.DirectMessageEvent -> rawEvent.message
+                else -> null
+            }
+            
+            messageObj?.attachments?.forEach { attachment ->
+                val type = attachment.contentType?.lowercase() ?: ""
+                when {
+                    type.startsWith("image/") -> append(PlainText(" [图片]"))
+                    type.startsWith("audio/") || type.startsWith("voice/") -> append(PlainText(" [语音]"))
+                    type.startsWith("video/") -> append(PlainText(" [视频]"))
+                    else -> append(PlainText(" [文件]"))
+                }
+            }
+        }
+    }.build()
 
     private var originalChain: MessageChain = currentChain
 
@@ -55,9 +104,9 @@ class QqMessage(
 
     override fun getTime(): Long = time
 
-    override fun serialize(): String = content
+    override fun serialize(): String = currentChain.serializeToMiraiCode()
 
-    override fun serializeOriginalMessage(): String = content
+    override fun serializeOriginalMessage(): String = originalChain.serializeToMiraiCode()
 
     override fun getInternalMessageCode(): IntArray = IntArray(0)
 

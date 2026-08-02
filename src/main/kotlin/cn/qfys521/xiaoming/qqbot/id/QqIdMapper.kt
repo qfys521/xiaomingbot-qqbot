@@ -27,8 +27,8 @@ object QqIdMapper {
 
     private val logger = LoggerFactory.getLogger(QqIdMapper::class.java)
 
-    // 起始分配 ID（自 100 亿起自增，避免与普通 QQ 号段发生冲突）
-    private const val START_ID = 10_000_000_000L
+    // 起始分配 ID（自 900 亿亿起自增，极其巨大的数字，完全避免与任何普通 UID 冲突）
+    private const val START_ID = 9000000000000000000L
 
     private val openIdToLongId = ConcurrentHashMap<String, Long>()
     private val longIdToOpenId = ConcurrentHashMap<Long, String>()

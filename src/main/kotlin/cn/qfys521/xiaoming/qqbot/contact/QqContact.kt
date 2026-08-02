@@ -73,12 +73,35 @@ class QqContact(
         val text = messages?.contentToString() ?: return Optional.empty()
         if (text.isBlank()) return Optional.empty()
 
+        // Replace any mapped virtual Long IDs back to OpenID mentions
+        val idRegex = "\\b9000000000000000\\d{3,}\\b".toRegex()
+        val oldIdRegex = "\\b10000000\\d{3,}\\b".toRegex()
+        var processedText = idRegex.replace(text) { match ->
+            val virtualId = match.value.toLongOrNull()
+            if (virtualId != null) {
+                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toOpenId(virtualId)
+                if (openId != null) "<@!$openId>" else match.value
+            } else {
+                match.value
+            }
+        }
+        processedText = oldIdRegex.replace(processedText) { match ->
+            val virtualId = match.value.toLongOrNull()
+            if (virtualId != null) {
+                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toOpenId(virtualId)
+                if (openId != null) "<@!$openId>" else match.value
+            } else {
+                match.value
+            }
+        }
+
+
         return try {
             val response = runBlocking {
                 val req = cn.qfys521.qqbot.model.message.SendMessageRequest(
-                    content = if (text.length <= 50) text else null,
-                    msgType = if (text.length > 50) 2 else 0,
-                    markdown = if (text.length > 50) cn.qfys521.qqbot.model.message.MessageMarkdown(content = text) else null,
+                    content = null,
+                    msgType = 2,
+                    markdown = cn.qfys521.qqbot.model.message.MessageMarkdown(content = processedText),
                     msgId = lastMessageId.ifEmpty { null },
                     msgSeq = if (lastMessageId.isNotEmpty()) msgSeq++ else null
                 )
@@ -88,9 +111,9 @@ class QqContact(
                     qqBot.api.sendGroupMessage(groupOpenId = contactId, request = req)
                 }
             }
-            logger.info("[发送消息] -> {} ({}): {}", contactName, contactId, text)
-            val sentMsg = QqMessage(bot, text, System.currentTimeMillis(), response.id ?: "")
-            Optional.of(sentMsg)
+            logger.info("[发送消息] -> {} ({}): {}", contactName, contactId, processedText)
+            val sentMsg = cn.qfys521.xiaoming.qqbot.message.QqMessage(bot, processedText, System.currentTimeMillis(), response.id ?: "")
+            java.util.Optional.of(sentMsg)
         } catch (e: Exception) {
             logger.error("向 QQ 会话($contactId) 发送消息失败: ${e.message}", e)
             Optional.empty()
@@ -98,7 +121,10 @@ class QqContact(
     }
 
     override fun nextMessage(timeout: Long, filter: Predicate<Message>?): Optional<Message> {
-        return Optional.empty()
+        val f = filter ?: Predicate { true }
+        return bot.contactManager.nextMessageEvent(timeout) { event ->
+            event.user.contact.code == this.code && f.test(event.message)
+        }.map { it.message }
     }
 
     override fun uploadImage(resource: ExternalResource?): Image {

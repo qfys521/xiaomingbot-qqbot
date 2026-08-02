@@ -106,8 +106,8 @@ suspend fun QqContact.sendKeyboard(
     msgId: String? = this.lastMessageId.ifEmpty { null }
 ): MessageResult {
     val req = SendMessageRequest(
-        msgType = 0,
-        content = content,
+        msgType = 2,
+        markdown = cn.qfys521.qqbot.model.message.MessageMarkdown(content = content),
         keyboard = keyboard,
         msgId = msgId
     )

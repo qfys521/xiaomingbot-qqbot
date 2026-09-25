@@ -75,6 +75,12 @@ object QqIdMapper {
     }
 
     /**
+     * Returns a mapped OpenID only when the virtual Long ID is known.
+     * Unknown IDs return null so ordinary numeric text is not converted to a QQ mention.
+     */
+    fun findOpenId(longId: Long): String? = longIdToOpenId[longId]
+
+    /**
      * 初始化持久化存储文件路径，并自动从本地读取载入历史 OpenID 映射记录。
      *
      * @param file 持久化映射 JSON 文件（推荐位于 `configurations/qq_id_map.json`）

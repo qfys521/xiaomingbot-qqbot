@@ -79,7 +79,7 @@ class QqContact(
         var processedText = idRegex.replace(text) { match ->
             val virtualId = match.value.toLongOrNull()
             if (virtualId != null) {
-                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toOpenId(virtualId)
+                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.findOpenId(virtualId)
                 if (openId != null) "<@!$openId>" else match.value
             } else {
                 match.value
@@ -88,7 +88,7 @@ class QqContact(
         processedText = oldIdRegex.replace(processedText) { match ->
             val virtualId = match.value.toLongOrNull()
             if (virtualId != null) {
-                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.toOpenId(virtualId)
+                val openId = cn.qfys521.xiaoming.qqbot.id.QqIdMapper.findOpenId(virtualId)
                 if (openId != null) "<@!$openId>" else match.value
             } else {
                 match.value
